@@ -32,7 +32,7 @@ class InventoryAllocator {
 
             // created constant amount to check if there's any inventory has amount of item over the current required amount.
             const amount = inventoryItem[property];
-            let exceed = -1;
+            let exceedIndex = -1;
 
             // created a variable, itemSize, to keep track of the remaining amount needed to fulfill current item.
             let itemSize = inventoryItem[property];
@@ -43,9 +43,9 @@ class InventoryAllocator {
             // for every inventory in the warehouse.
             for (let i = 0; i < inventoryWarehouse.length; i++) {
 
-                // if the amount of given item this inventory has is greater or equal to the amount required, check exceed to given index.
+                // if the amount of given item this inventory has is greater or equal to the amount required, check exceedIndex to given index.
                 if(inventoryWarehouse[i].inventory[property] >= amount){
-                    exceed = i;
+                    exceedIndex = i;
                 }
 
                 // if current item is not in the inventory OR if the inventory has 0 amount of the item, then move onto the next inventory.
@@ -70,16 +70,16 @@ class InventoryAllocator {
                     with key being the name of the inventory and value being the index of the inventory in res.
                 */
                 if(inventoryWarehouse[i].name in res){
-                    res[inventoryWarehouse[i].name][property] = exceed !== -1 ? amount : amountProvided;
+                    res[inventoryWarehouse[i].name][property] = exceedIndex !== -1 ? amount : amountProvided;
                 } else {
                     res[inventoryWarehouse[i].name] = {};
-                    res[inventoryWarehouse[i].name][property] = exceed !== -1 ? amount : amountProvided;
+                    res[inventoryWarehouse[i].name][property] = exceedIndex !== -1 ? amount : amountProvided;
                 }
 
                 
                 // if itemSize is less than 0, meaning we have fulfilled required amount, break out the loop since we do not need to go to the next inventory.
-                // or exceed not -1, meaning this inventory can fulfill the amount required already
-                if (itemSize <= 0 || exceed !== -1) {
+                // or exceedIndex not -1, meaning this inventory can fulfill the amount required already
+                if (itemSize <= 0 || exceedIndex !== -1) {
                     break;
                 }
 
@@ -89,14 +89,14 @@ class InventoryAllocator {
             /*
                 In this stage, we are handeling the case when there is an inventory at any point, where the amount for given item,
                 is larger or equal to the amount required, we will take that inventory instead of spliting among other inventories.
-                The variable exceed holds the index of the warehouse that can fulfill the amount.
+                The variable exceedIndex holds the index of the warehouse that can fulfill the amount.
                 We will loop down and if res has such inventory with item previously added in, we will
                     delete the whole key, if the item is the only item in the object,
                     delete the item, if there are other items ind the object.
 
             */
-            if(exceed !== -1){
-                for(let i = exceed - 1; i >= 0; i--){
+            if(exceedIndex !== -1){
+                for(let i = exceedIndex - 1; i >= 0; i--){
                     if(!(inventoryWarehouse[i].name in res)) continue;
                     
                     let objectLength = Object.keys(res[inventoryWarehouse[i].name]).length;
