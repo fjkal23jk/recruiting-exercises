@@ -19,20 +19,20 @@ class InventoryAllocator {
     calcShipment() {
         
         /* initialize some required variables
-           res: the result output, initialized to be an empty list at first.
+           res: the result output, initialized to be an empty object at first.
            inventoryItem: the item set.
            inventoryWarehouse: the inventory set.
-           map: a map that maps inventory's name to their corresponding index in res.
         */
-        let res = [];
+        let res = {};
         let inventoryItem = this.items;
         let inventoryWarehouse = this.warehouse;
-        let map = {};
-
-
 
         // for every item in the item set.
         for (let property in inventoryItem) {
+
+            // created constant amount to check if there's any inventory has amount of item over the current required amount.
+            const amount = inventoryItem[property];
+            let exceed = -1;
 
             // created a variable, itemSize, to keep track of the remaining amount needed to fulfill current item.
             let itemSize = inventoryItem[property];
@@ -43,10 +43,14 @@ class InventoryAllocator {
             // for every inventory in the warehouse.
             for (let i = 0; i < inventoryWarehouse.length; i++) {
 
+                // if the amount of given item this inventory has is greater or equal to the amount required, check exceed to given index.
+                if(inventoryWarehouse[i].inventory[property] >= amount){
+                    exceed = i;
+                }
+
                 // if current item is not in the inventory OR if the inventory has 0 amount of the item, then move onto the next inventory.
                 if (!(property in inventoryWarehouse[i].inventory) || inventoryWarehouse[i].inventory[property] <= 0) continue;
 
-                let warehouseResult = {};
                 
                 // decrement itemSize by the amount of current inventory has on the item,
                 itemSize -= inventoryWarehouse[i].inventory[property];
@@ -60,25 +64,22 @@ class InventoryAllocator {
                 let amountProvided = itemSize < 0 ? inventoryWarehouse[i].inventory[property] + itemSize : inventoryWarehouse[i].inventory[property];
 
                 /*
-                    if the current inventory is already in map, meaning res already has the inventory, then we update res at specific index.
+                    if the current inventory is already in res, meaning res already has the inventory, then we update res at specific index.
 
-                    else, we will create a new object for the inventory and push it onto res, finally we will add it into map,
+                    else, we will create a new object for the inventory and push it onto res, finally we will add it into res,
                     with key being the name of the inventory and value being the index of the inventory in res.
                 */
-                if (inventoryWarehouse[i].name in map) {
-                    let inventoryIndex = map[inventoryWarehouse[i].name];
-                    res[inventoryIndex][inventoryWarehouse[i].name][property] = amountProvided;
-
+                if(inventoryWarehouse[i].name in res){
+                    res[inventoryWarehouse[i].name][property] = exceed !== -1 ? amount : amountProvided;
                 } else {
-                    warehouseResult[inventoryWarehouse[i].name] = {};
-                    warehouseResult[inventoryWarehouse[i].name][property] = amountProvided;
-                    res.push(warehouseResult);
-                    map[inventoryWarehouse[i].name] = res.length - 1;
+                    res[inventoryWarehouse[i].name] = {};
+                    res[inventoryWarehouse[i].name][property] = exceed !== -1 ? amount : amountProvided;
                 }
 
-
+                
                 // if itemSize is less than 0, meaning we have fulfilled required amount, break out the loop since we do not need to go to the next inventory.
-                if (itemSize <= 0) {
+                // or exceed not -1, meaning this inventory can fulfill the amount required already
+                if (itemSize <= 0 || exceed !== -1) {
                     break;
                 }
 
@@ -86,9 +87,36 @@ class InventoryAllocator {
 
 
             /*
+                In this stage, we are handeling the case when there is an inventory at any point, where the amount for given item,
+                is larger or equal to the amount required, we will take that inventory instead of spliting among other inventories.
+                The variable exceed holds the index of the warehouse that can fulfill the amount.
+                We will loop down and if res has such inventory with item previously added in, we will
+                    delete the whole key, if the item is the only item in the object,
+                    delete the item, if there are other items ind the object.
+
+            */
+            if(exceed !== -1){
+                for(let i = exceed - 1; i >= 0; i--){
+                    if(!(inventoryWarehouse[i].name in res)) continue;
+                    
+                    let objectLength = Object.keys(res[inventoryWarehouse[i].name]).length;
+                    
+                    if (objectLength == 1 && property in res[inventoryWarehouse[i].name]) {
+                        delete res[inventoryWarehouse[i].name];
+                    } else {
+                        delete res[inventoryWarehouse[i].name][property];
+                    }
+                }
+                continue;
+            }
+
+
+
+
+            /*
                 In this stage, we are handeling the case when even with all inventory, the required amount is still not fulfilled,
                 we will iterate over res and
-                    if current item is the only item in the inventory, then we delete the whole object at given index, along with key and value in map.
+                    if current item is the only item in the inventory, then we delete the whole object in res
                     else, we simply delete the specific item in the object.
 
                 an example would be
@@ -99,26 +127,30 @@ class InventoryAllocator {
 
             */
             if (itemSize > 0) {
-                for (let i = res.length - 1; i >= 0; i--) {
-                    let inventoryName = Object.keys(res[i])[0];
-                    let objectLength = Object.keys(res[i][inventoryName]).length;
-                    
-                    if (objectLength == 1 && property in res[i][inventoryName]) {
-                        delete map[inventoryName];
-                        res.splice(i, 1);
+                for (var key in res) {
+                    let objectLength = Object.keys(res[key]).length;
+                    if (objectLength == 1 && property in res[key]) {
+                        delete res[key];
                     } else {
-                        delete res[i][inventoryName][property];
+                        delete res[key][property];
                     }
                 }
             }
         }
 
-        // at very last, return res.
-        return res;
+        // create output based on res.
+        let resArr = []
+        for(var key in res){
+            let tempObj = {};
+            tempObj[key] = res[key];
+            resArr.push(tempObj);
+        }
+
+
+        return resArr;
     }
 
 }
-
 
 
 // exporting the class for testing purposes.

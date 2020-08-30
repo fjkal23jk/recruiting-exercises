@@ -36,7 +36,7 @@ describe('Given tests for InventoryAllocator', function () {
         });
     });
     describe('Example Test 2', function () {
-        it('Not enough inventory -> no allocations!', function () {
+        it('Not enough inventory -> no allocations! 1', function () {
             let itemSet = {};
             itemSet.apple = 1;
             let inventorySet = [];
@@ -52,6 +52,22 @@ describe('Given tests for InventoryAllocator', function () {
         });
     });
     describe('Example Test 3', function () {
+        it('Not enough inventory -> no allocations! 2', function () {
+            let itemSet = {};
+            itemSet.apple = 2;
+            let inventorySet = [];
+            inventorySet[0] = {};
+            inventorySet[0].name = "owd";
+            inventorySet[0].inventory = {};
+            inventorySet[0].inventory.apple = 1;
+
+            const expectedResult = [];
+            const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
+            const result = inventoryClass.cheapestShipment;
+            assert.equal(JSON.stringify(result), JSON.stringify(expectedResult));
+        });
+    });
+    describe('Example Test 4', function () {
         it('Should split an item across warehouses if that is the only way to completely ship an item', function () {
             let itemSet = {};
             itemSet.apple = 10;
@@ -77,21 +93,22 @@ describe('Given tests for InventoryAllocator', function () {
 // Board cases
 describe('Board Cases Testing for InventoryAllocator', function () {
     describe('Board Test 1', function () {
-        it('Will always choose the lower cost inventory first', function () {
+        it('Multiple items with one inventory', function () {
             let itemSet = {};
             itemSet.apple = 10;
+            itemSet.orange = 10;
+            itemSet.pineapple = 10;
+            itemSet.banana = 10;
             let inventorySet = [];
             inventorySet[0] = {};
             inventorySet[0].name = "owd";
             inventorySet[0].inventory = {};
             inventorySet[0].inventory.apple = 9;
+            inventorySet[0].inventory.orange = 111;
+            inventorySet[0].inventory.pineapple = 19;
+            inventorySet[0].inventory.banana = 2;
 
-            inventorySet[1] = {};
-            inventorySet[1].name = "dm";
-            inventorySet[1].inventory = {};
-            inventorySet[1].inventory.apple = 10;
-
-            const expectedResult = [{ 'owd': { 'apple': 9 } }, { 'dm': { 'apple': 1 } }];
+            const expectedResult = [{ 'owd': { 'orange': 10 , 'pineapple': 10} }];
             const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
             const result = inventoryClass.cheapestShipment;
             assert.equal(JSON.stringify(result), JSON.stringify(expectedResult));
@@ -141,8 +158,8 @@ describe('Board Cases Testing for InventoryAllocator', function () {
             inventorySet[1].name = "dm";
             inventorySet[1].inventory = {};
             inventorySet[1].inventory.apple = 100;
-            inventorySet[0].inventory.orange = 100;
-            inventorySet[0].inventory.banana = 100;
+            inventorySet[1].inventory.orange = 100;
+            inventorySet[1].inventory.banana = 100;
 
             const expectedResult = [{ 'owd': { 'apple': 10, 'banana': 10, 'orange': 10 } }];
             const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
@@ -184,7 +201,34 @@ describe('Board Cases Testing for InventoryAllocator', function () {
             inventorySet[3].inventory = {};
             inventorySet[3].inventory.pineapple = 10;
 
-            const expectedResult = [{ 'owd': { 'apple': 2} }, { 'cc': { 'apple': 8, 'banana': 2, 'orange': 5} }, { 'dm': { 'banana': 8, 'orange': 5, 'pineapple': 2} }, { 'gg': { 'pineapple': 8} }];
+            const expectedResult = [{ 'cc': { 'apple': 10, 'banana': 10, 'orange': 10} }, { 'gg': { 'pineapple': 10} }];
+            const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
+            const result = inventoryClass.cheapestShipment;
+            assert.equal(JSON.stringify(result), JSON.stringify(expectedResult));
+        });
+    });
+    describe('Board Test 5', function () {
+        it('When last inventory can fulfill all items', function () {
+            let itemSet = {};
+            itemSet.apple = 10;
+            itemSet.banana = 10;
+            itemSet.orange = 10;
+            let inventorySet = [];
+            inventorySet[0] = {};
+            inventorySet[0].name = "owd";
+            inventorySet[0].inventory = {};
+            inventorySet[0].inventory.apple = 2;
+            inventorySet[0].inventory.orange = 3;
+            inventorySet[0].inventory.banana = 4;
+
+            inventorySet[1] = {};
+            inventorySet[1].name = "dm";
+            inventorySet[1].inventory = {};
+            inventorySet[1].inventory.apple = 100;
+            inventorySet[1].inventory.orange = 100;
+            inventorySet[1].inventory.banana = 100;
+
+            const expectedResult = [{ 'dm': { 'apple': 10, 'banana': 10, 'orange': 10 } }];
             const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
             const result = inventoryClass.cheapestShipment;
             assert.equal(JSON.stringify(result), JSON.stringify(expectedResult));
@@ -217,7 +261,7 @@ describe('Edge Cases Testing for InventoryAllocator', function () {
     });
 
     describe('Edge Test 2', function () {
-        it('Multiple inventory but not enough supply for multiple items', function () {
+        it('Choose one inventory rather than spliting across all', function () {
             let itemSet = {};
             itemSet.apple = 100;
             itemSet.banana = 100;
@@ -251,7 +295,7 @@ describe('Edge Cases Testing for InventoryAllocator', function () {
             inventorySet[3].inventory.orange = 10;
             inventorySet[3].inventory.banana = 24;
 
-            const expectedResult = [{ 'owd': { 'apple': 5 } }, { 'dm': { 'apple': 5 } }, { 'pp': { 'apple': 5 } }, { 'zz': { 'apple': 85 } }];
+            const expectedResult = [ {'zz': { 'apple': 100 } }];
             const inventoryClass = new InventoryAllocator(itemSet, inventorySet);
             const result = inventoryClass.cheapestShipment;
             assert.equal(JSON.stringify(result), JSON.stringify(expectedResult));
