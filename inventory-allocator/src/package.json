@@ -1,0 +1,14 @@
+{
+  "name": "inventory-allocator",
+  "version": "1.0.0",
+  "description": "package for test",
+  "main": "/test/test.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Jinghong Luo",
+  "license": "ISC"
+}
